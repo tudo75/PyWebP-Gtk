@@ -6,6 +6,8 @@ require_version("Gtk", "3.0")
 require_version("Gdk", "3.0")
 from gi.repository import Gtk, Gio, Gdk
 from gi.repository.GdkPixbuf import Pixbuf
+from pywebp.settings import settings
+from pywebp.settings_panel import SettingsPanel
 
 class PyWebP(Gtk.Application):
     """
@@ -21,13 +23,15 @@ class PyWebP(Gtk.Application):
         self.header_bar = None
         self.iconview = None
         self.toolbar = None
+        self.statusbar = None
+        self.popover = None
 
     def do_activate(self):
         """Activate method required
         """
         self._init_widgets()
         self._create_window_structure()
-        self._init_style()
+        # self._init_style(settings['darkmode'].get_value())
         self.add_window(self.window)
         self.window.show_all()
 
@@ -55,16 +59,20 @@ class PyWebP(Gtk.Application):
         settings_btn = Gtk.Button()
         settings_icon_path = os.path.join(os.path.dirname(__file__), 'images/icons/applications-system/32.png')
         settings_btn.set_image(Gtk.Image.new_from_file(settings_icon_path))
-        settings_btn.connect("clicked", self.on_about)
+        # settings_btn.connect("clicked", self.on_about)
         self.header_bar.pack_end(settings_btn)
+
+        self.init_popover(settings_btn, SettingsPanel())
 
         self.window.set_titlebar(self.header_bar)
 
         v_box = Gtk.VBox()
         v_box.add(self.iconview)
         v_box.add(self.toolbar)
+        v_box.add(self.statusbar)
         self.window.add(v_box)
-        self.window.resize(800, 400)
+        geometry = settings['geometry'].get_value()
+        self.window.resize(geometry[0], geometry[1])
         self.window.set_position(Gtk.WindowPosition.CENTER)
         logo_icon_path = os.path.join(os.path.dirname(__file__), 'images/icons/logo/64.png')
         self.window.set_icon_from_file(logo_icon_path)
@@ -77,6 +85,7 @@ class PyWebP(Gtk.Application):
         self.header_bar = Gtk.HeaderBar()
         self.iconview = Gtk.IconView()
         self.toolbar = Gtk.Toolbar()
+        self.statusbar = Gtk.Statusbar()
 
     def _init_style(self, darkmode = True):
         """Load the application's CSS file."""
@@ -159,3 +168,26 @@ SOFTWARE.
 
     def on_close(self, action, parameter):
         action.destroy()
+
+    def init_popover(self, widget, container):
+        """
+        Add popover for button.
+        :param widget: Popover point to this widget (usually a button)
+        :param container: Container inside the popover
+        :return: Popover bubble-like context window
+        """
+        self.popover = Gtk.Popover()
+        self.popover.set_relative_to(widget)
+        self.popover.set_position(Gtk.PositionType.BOTTOM)
+        self.popover.set_modal(True)
+        self.popover.add(container)
+        self.popover.set_border_width(8)
+        self.popover.set_hexpand(False)
+        widget.connect("clicked", self.on_click_popup)
+
+    def on_click_popup(self, button):
+        """
+        Triggered action to show the popover
+        :param button: button that trigger the popup action
+        """
+        self.popover.popup()
