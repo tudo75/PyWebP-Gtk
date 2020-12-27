@@ -1,1 +1,4 @@
 PyGObject~=3.38.0
+pywebp~=0.0.1.dev0
+setuptools~=51.0.0
+webptools~=0.0.3
