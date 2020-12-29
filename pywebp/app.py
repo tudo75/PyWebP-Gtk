@@ -29,7 +29,7 @@ import os
 from gi import require_version
 require_version("Gtk", "3.0")
 require_version("Gdk", "3.0")
-from gi.repository import Gtk, Gio, Gdk
+from gi.repository import Gtk, Gio, Gdk, GObject
 from gi.repository.GdkPixbuf import Pixbuf
 from pywebp.settings import settings
 from pywebp.settings_panel import SettingsPanel
@@ -69,6 +69,15 @@ class PyWebP(Gtk.Application):
         Gtk.Application.do_shutdown(self)
         sys.exit()
 
+    def _init_widgets(self):
+        """Initialize widgets
+        """
+        self.window = Gtk.Window()
+        self.header_bar = Gtk.HeaderBar()
+        self.iconview = Gtk.IconView()
+        self.toolbar = Gtk.Toolbar()
+        self.statusbar = Gtk.Statusbar()
+
     def _create_window_structure(self):
         """Generate the Gui structure
         """
@@ -86,33 +95,45 @@ class PyWebP(Gtk.Application):
 
         settings_btn = Gtk.Button()
         settings_btn.set_image(Gtk.Image.new_from_icon_name('emblem-system-symbolic', Gtk.IconSize.DND))
-        # settings_btn.connect("clicked", self.on_about)
+        self.init_popover(settings_btn, SettingsPanel(self))
         self.header_bar.pack_end(settings_btn)
-
-        self.init_popover(settings_btn, SettingsPanel())
 
         self.window.set_titlebar(self.header_bar)
 
+        self.iconview.set_vexpand(True)
+
+        self.statusbar.set_border_width(0)
+        self.statusbar.set_vexpand(False)
+        self.statusbar.set_margin_left(0)
+        self.statusbar.set_margin_top(0)
+        self.statusbar.set_margin_right(0)
+        self.statusbar.set_margin_bottom(0)
+        self.statusbar.set_vexpand(False)
+
+        """
         v_box = Gtk.VBox()
         v_box.add(self.iconview)
         v_box.add(self.toolbar)
         v_box.add(self.statusbar)
         self.window.add(v_box)
-        # geometry = settings['geometry'].get_value()
+        """
+        grid = Gtk.Grid()
+        grid.set_column_spacing(5)
+        grid.set_row_spacing(5)
+        grid.set_column_homogeneous(True)
+        grid.set_row_homogeneous(False)
+        grid.attach(self.iconview, 0, 0, 2, 1)
+        grid.attach(self.toolbar, 0, 1, 2, 1)
+        grid.attach(self.statusbar, 0, 2, 2, 1)
+        grid.set_vexpand(True)
+
+        self.window.add(grid)
+
         geometry = settings.get_integer_list("geometry")
         self.window.resize(geometry[0], geometry[1])
         self.window.set_position(Gtk.WindowPosition.CENTER)
         self.window.set_icon(Pixbuf.new_from_file_at_scale(LOGO_PATH, 32, 32, True))
         self.window.set_default_icon(Pixbuf.new_from_file_at_scale(LOGO_PATH, 32, 32, True))
-    
-    def _init_widgets(self):
-        """Initialize widgets
-        """
-        self.window = Gtk.Window()
-        self.header_bar = Gtk.HeaderBar()
-        self.iconview = Gtk.IconView()
-        self.toolbar = Gtk.Toolbar()
-        self.statusbar = Gtk.Statusbar()
 
     def _init_style(self, darkmode = True):
         """Load the application's CSS file
@@ -120,8 +141,14 @@ class PyWebP(Gtk.Application):
         Args:
             darkmode: True or False if you want to use dark mode theme. Default it's True
         """
+        screen = Gdk.Screen.get_default()
+        provider = Gtk.CssProvider()
+        add_provider = Gtk.StyleContext.add_provider_for_screen
+        css_path = os.path.join(os.path.dirname(__file__), 'css/font.css')
+        provider.load_from_path(css_path)
+        add_provider(screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
-        print(settings.get_boolean("darkmode"))
+        self.toggle_darkmode(darkmode)
         """
         screen = Gdk.Screen.get_default()
         provider = Gtk.CssProvider()
@@ -140,13 +167,14 @@ class PyWebP(Gtk.Application):
         Args:
             darkmode: True or False if app must use dark mode theme. Default it's True
         """
-
+        prefs_css = self.window.get_style_context()
 
         # Toggle dark mode for app
         if darkmode:
-            self._init_style(True)
+            prefs_css.add_class('dark')
         else:
-            self._init_style(False)
+            prefs_css.remove_class('dark')
+        print('app.toggle_darkmode done')
 
     def on_about(self, button):
         """Create and display an about us dialog window
@@ -164,22 +192,21 @@ class PyWebP(Gtk.Application):
         about_dialog.set_authors(["Nicola Tudino <https://github.com/tudo75>"])
         about_dialog.set_program_name("PyWebP-Gtk")
         about_dialog.set_version('v0.0.1.dev0')
-        about_dialog.set_comments('Battery Monitor is a utility tool developed on Python3 and PyGtk3.'
-                                  ' It will notify the user about charging, discharging, not charging and critically'
-                                  ' low battery state of the battery on Linux (surely if the battery is present).')
-        about_dialog.set_website("http://tudo75.github.com/tudo75/PyWebP-Gtk")
+        about_dialog.set_comments('\nPyWebP-Gtk is a utility tool developed on Python3 and PyGobject3.\n'
+                                  'Lets you convert image files to/from webp format.\n'
+                                  '')
+        about_dialog.set_website("http://github.com/tudo75/PyWebP-Gtk")
         about_dialog.set_website_label("Github Code Repository")
         about_dialog.set_copyright('Copyright \xa9 2020-2021 Tudo75')
 
-        about_dialog.set_documenters(['Maksudur Rahman Maateen <https://maateen.me/>',])
-        about_dialog.add_credit_section('Webptools package', ['Sai Kumar Yava <https://github.com/scionoftech>'])
+        about_dialog.set_documenters(['Nicola Tudino <https://github.com/tudo75>',])
         about_dialog.add_credit_section('Webptools package', ['Sai Kumar Yava <https://github.com/scionoftech>'])
 
         about_dialog.set_license_type (Gtk.License.MIT_X11)
         about_dialog.set_license('''
 MIT License
 
-Copyright (c) 2020-2021 Nicola Tudino <a.k.a. tudo75>
+Copyright (c) 2020-2021 Nicola Tudino a.k.a. tudo75 <https://github.com/tudo75>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -241,3 +268,15 @@ SOFTWARE.
             button: button that trigger the popup action
         """
         self.popover.popup()
+
+    def push_status_message(self, message, context_id, timeout=5):
+        """Show message in status bar for a some seconds
+
+        Args:
+            message: text message to show in statusbar
+            context_id: context id of the message
+            timeout: timeout of the message in seconds. Default is 5
+        """
+        self.statusbar.push(context_id, message)
+        GObject.timeout_add(timeout * 1000, self.statusbar.pop, context_id)
+

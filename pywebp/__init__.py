@@ -34,7 +34,7 @@ try:
     from gi import require_version
     require_version("Gtk", "3.0")
     require_version("Gdk", "3.0")
-    from gi.repository import Gtk, GdkPixbuf, Gio, Gdk
+    from gi.repository import Gtk, GdkPixbuf, Gio, Gdk, GLib
 
 except ImportError as import_error:
     message = import_error.msg + "\n" + "Are all dependencies installed?"
