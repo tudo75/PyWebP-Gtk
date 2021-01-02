@@ -2,14 +2,23 @@
     font-family: Arial, Sans, monospace;
     font-size: 14px;
 }
+
 :link,
 :visited {
     color: #1B6ACB;
 }
+
 statusbar {
-    color: #1B6ACB;
-    padding: 5px;
+    padding: 2px;
     margin: 0px;
+    min-height: 18px;
     /*background-color: white;*/
-    min-height: 20px;
+}
+
+statusbar.dark {
+    /*color: #ffffff;*/
+}
+
+toolbar  {
+    -GtkToolbar-button-relief: normal;
 }

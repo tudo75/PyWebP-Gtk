@@ -33,6 +33,7 @@ from gi.repository import Gtk, Gio, Gdk, GObject
 from gi.repository.GdkPixbuf import Pixbuf
 from pywebp.settings import settings
 from pywebp.settings_panel import SettingsPanel
+from pywebp.toolbar import Toolbar
 from webptools import cwebp, dwebp
 
 LOGO_PATH = os.path.join(os.path.dirname(__file__), 'images/webp-logo.svg')
@@ -75,7 +76,7 @@ class PyWebP(Gtk.Application):
         self.window = Gtk.Window()
         self.header_bar = Gtk.HeaderBar()
         self.iconview = Gtk.IconView()
-        self.toolbar = Gtk.Toolbar()
+        self.toolbar = Toolbar(self)
         self.statusbar = Gtk.Statusbar()
 
     def _create_window_structure(self):
@@ -175,6 +176,7 @@ class PyWebP(Gtk.Application):
         else:
             prefs_css.remove_class('dark')
         print('app.toggle_darkmode done')
+
 
     def on_about(self, button):
         """Create and display an about us dialog window
@@ -277,6 +279,6 @@ SOFTWARE.
             context_id: context id of the message
             timeout: timeout of the message in seconds. Default is 5
         """
-        self.statusbar.push(context_id, message)
+        self.statusbar.push(context_id, '>> ' + message)
         GObject.timeout_add(timeout * 1000, self.statusbar.pop, context_id)
 
