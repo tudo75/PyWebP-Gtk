@@ -32,6 +32,14 @@ ROW_SPACING = 30
 BORDER_WIDTH = 8
 
 class SettingsPanel(Gtk.Notebook):
+    """SettingsPanel class for PyWebP.
+
+    Inherits from Gtk.Notebook and includes all actions that apply to it.
+
+    Attributes:
+        _app: The main pywebp class to interact with.
+    """
+
     def __init__(self, app):
         super(SettingsPanel, self).__init__()
         self._app = app
@@ -50,7 +58,7 @@ class SettingsPanel(Gtk.Notebook):
         general_grid.attach(Gtk.Label("Enable dark mode"), 0, 0, 1, 1)
         darkmode_btn = Gtk.Switch()
         darkmode_btn.props.halign = Gtk.Align.CENTER
-        darkmode_btn.set_size_request(50, 20)
+        # darkmode_btn.set_size_request(50, 20)
         darkmode_btn.set_active(settings.get_boolean("darkmode"))
         darkmode_btn.connect('state-set', self.toggle_darkmode)
         general_grid.attach(darkmode_btn, 1, 0, 1, 1)
