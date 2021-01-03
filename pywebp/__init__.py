@@ -28,7 +28,6 @@ import sys
 __license__ = "MIT"
 __version__ = "0.0.1.dev0"
 __author__ = __maintainer__ = "Nicola Tudino"
-__email__ = "tudo75@gmail.com"
 
 try:
     from gi import require_version

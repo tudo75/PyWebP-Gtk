@@ -9,5 +9,5 @@ setup(
     install_requires=['PyGObject'],
     description="A converter for WebP image format",
     license="MIT",
-    url="https://github.com/tudo75/pywebp",
+    url="https://github.com/tudo75/PyWebP-Gtk",
 )
