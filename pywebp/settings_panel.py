@@ -97,7 +97,7 @@ class SettingsPanel(Gtk.Notebook):
         print(action)
         print(darkmode)
         self._app.toggle_darkmode(darkmode)
-        context_id =self._app.statusbar.get_context_id("message from switch")
+        context_id = self._app.statusbar.get_context_id("message from switch")
         message = "Dark mode enabled"
         if not darkmode:
             message = "Dark mode disabled"

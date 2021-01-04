@@ -100,7 +100,7 @@ class SettingStorage(GObject.Object):
         if not _keyfile.has_group(SETTINGS_GROUP_NAME):
             _keyfile.set_boolean(SETTINGS_GROUP_NAME, "darkmode", True)
             _keyfile.set_integer_list(SETTINGS_GROUP_NAME, "default_thumbsize", [128, 128])
-            _keyfile.set_integer_list(SETTINGS_GROUP_NAME, "geometry", [800, 400])
+            _keyfile.set_integer_list(SETTINGS_GROUP_NAME, "geometry", [980, 400])
             _keyfile.set_boolean(SETTINGS_GROUP_NAME, "to_webp", False)
 
         _keyfile.save_to_file(CONFIG_FILE)
