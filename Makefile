@@ -29,6 +29,7 @@
 help:
 	@echo "-------------------------HELP--------------------------"
 	@echo "To build project documentation type make pywebp-docs"
+	@echo "To run project tests type make pywebp-tests"
 	@echo "To build exe in one dir type make pywebp-build"
 	@echo "To build single file exe type make pywebp-build-onefile"
 	@echo "-------------------------------------------------------"
@@ -36,6 +37,10 @@ help:
 # build documentation in the docs folder using sphinx
 pywebp-docs:
 	cd docs && $(MAKE) html
+
+# Execute tests with pytest
+pywebp-tests:
+	pytest tests
 
 # build exe for windows in a single folder structure
 pywebp-build:
