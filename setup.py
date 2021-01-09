@@ -2,7 +2,7 @@
 from setuptools import setup
 
 setup(
-    name="pywebp",
+    name="pywebp-gtk",
     version="0.0.1.dev0",
     packages=['pywebp'],
     scripts=['pywebp/pywebp'],

@@ -24,14 +24,13 @@
 #
 
 import os
+import gi
 
-from gi import require_version
-require_version("Gtk", "3.0")
-require_version("Gdk", "3.0")
-from gi.repository import Gtk, Gdk, GLib
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, GLib
 from gi.repository.GdkPixbuf import Pixbuf
-from pywebp.helpers import error_message
 from pywebp.settings import settings
+from pywebp import helpers
 
 
 class Toolbar(Gtk.Toolbar):
@@ -67,11 +66,11 @@ class Toolbar(Gtk.Toolbar):
         separator.set_draw(False)
         separator.set_expand(True)
 
-        # TODO implement remove files from thumbs board
         remove_files_btn = Gtk.ToolButton()
         remove_files_btn.set_is_important(True)
         remove_files_btn.set_label_widget(Gtk.Label("Remove files"))
         remove_files_btn.set_icon_name("user-trash-symbolic")
+        remove_files_btn.connect('clicked', self.remove_files)
         self.add(remove_files_btn)
 
         separator = Gtk.SeparatorToolItem()
@@ -79,11 +78,11 @@ class Toolbar(Gtk.Toolbar):
         separator.set_draw(False)
         separator.set_expand(True)
 
-        # TODO implement handling of select/deselect all thumbs of the board
         select_chk_btn = Gtk.ToolItem()
         select_chk_btn.set_is_important(True)
-        chk_all = Gtk.CheckButton.new_with_label('Select All')
-        select_chk_btn.add(chk_all)
+        self._chk_all = Gtk.CheckButton.new_with_label('Select All')
+        self._chk_all.connect('toggled', self.select_all)
+        select_chk_btn.add(self._chk_all)
         self.add(select_chk_btn)
 
         separator = Gtk.SeparatorToolItem()
@@ -93,10 +92,10 @@ class Toolbar(Gtk.Toolbar):
 
         to_from_chk_btn = Gtk.ToolItem()
         to_from_chk_btn.set_is_important(True)
-        chk_to_from = Gtk.CheckButton.new_with_label('To WebP')
-        chk_to_from.set_active(settings.get_boolean("to_webp"))
-        chk_to_from.connect('toggled', self.set_to_webp)
-        to_from_chk_btn.add(chk_to_from)
+        self._chk_to_from = Gtk.CheckButton.new_with_label('To WebP')
+        self._chk_to_from.set_active(settings.get_boolean("to_webp"))
+        self._chk_to_from.connect('toggled', self.set_to_webp)
+        to_from_chk_btn.add(self._chk_to_from)
         self.add(to_from_chk_btn)
 
         separator = Gtk.SeparatorToolItem()
@@ -152,13 +151,20 @@ class Toolbar(Gtk.Toolbar):
         dialog.set_default_size(600, 400)
         dialog.set_default_geometry(600, 400)
         dialog.resize(600, 400)
+        hb = dialog.get_header_bar()
+        if not hb == None:        
+            hb.set_show_close_button(True)
 
         dialog.connect("update-preview", self.update_preview, None)
 
-        # TODO handling the response to populate thumbs board (check for duplicates)
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
-            print(dialog.get_filenames())
+            for img in dialog.get_filenames():
+                self._app.iconview._model.add_to_model(img)
+
+            context_id = self._app.statusbar.get_context_id("choose_files")
+            self._app.push_status_message("Selected files added", context_id, 4)
+            self._chk_to_from.set_sensitive(False)
         elif response == Gtk.ResponseType.CANCEL:
             print('cancel')
 
@@ -186,15 +192,72 @@ class Toolbar(Gtk.Toolbar):
             context_id = self._app.statusbar.get_context_id("error-from-filechooser")
             self._app.push_status_message(error, context_id, 4)
 
-    def set_to_webp(self, action):
+    def set_to_webp(self, checkbox):
         """Register preferences if file conversions to or from webp format
 
         Args:
-            action: toggled widget used to make the choice
+            checkbox: toggled widget used to make the choice
         """
-        checked = action.get_active()
-        if checked:
-            settings.set_boolean("to_webp", True)
-        else:
-            settings.set_boolean("to_webp", False)
+        checked = checkbox.get_active()
+        msg = "Unable to change file conversion type while files are already added"
+        if len(self._app.iconview._model.get_model()) == 0:
+            if checked:
+                settings.set_boolean("to_webp", True)
+                msg = "File conversion set 'to webp'"
+            else:
+                settings.set_boolean("to_webp", False)
+                msg = "File conversion set 'from webp'"
 
+        context_id = self._app.statusbar.get_context_id("set_to_webp")
+        self._app.push_status_message(msg, context_id, 4)
+
+    def remove_files(self, btn):
+        """
+
+        Args:
+            btn:
+
+        Returns:
+
+        """
+        msg = "Selected items removed"
+        items = self._app.iconview.get_selected_items()
+        removed = self._app.iconview._model.remove_selected(items)
+        if not removed:
+            msg = "Unable to remove some items"
+
+        if len(self._app.iconview._model.get_model()) == 0:
+            self._chk_to_from.set_sensitive(True)
+            self._app.toolbar.set_select_all(False)
+
+        context_id = self._app.statusbar.get_context_id("remove_files")
+        self._app.push_status_message(msg, context_id, 4)
+
+
+    def select_all(self, checkbox):
+        """
+
+        Args:
+            checkbox:
+        """
+        checked = checkbox.get_active()
+        msg = ""
+        if checked:
+            self._app.iconview.select_all()
+            msg = "All items selected"
+        else:
+            self._app.iconview.unselect_all()
+            msg = "All items deselected"
+
+
+        context_id = self._app.statusbar.get_context_id("select_all")
+        self._app.push_status_message(msg, context_id, 4)
+
+    def set_select_all(self, value):
+        """
+
+        Args:
+            value:
+        """
+        if isinstance(value, (bool)):
+            self._chk_all.set_active(value)

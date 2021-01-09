@@ -25,18 +25,21 @@
 
 import sys
 import os
+import gi
 
-from gi import require_version
-require_version("Gtk", "3.0")
-require_version("Gdk", "3.0")
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
 from gi.repository import Gtk, Gio, Gdk, GObject
 from gi.repository.GdkPixbuf import Pixbuf
 from pywebp.settings import settings
 from pywebp.settings_panel import SettingsPanel
 from pywebp.toolbar import Toolbar
+from pywebp.iconview import IconView
+from pywebp.iconstore import IconStore
 from webptools import cwebp, dwebp
 
 LOGO_PATH = os.path.join(os.path.dirname(__file__), 'images/webp-logo.svg')
+
 
 class PyWebP(Gtk.Application):
     """
@@ -75,7 +78,7 @@ class PyWebP(Gtk.Application):
         """
         self.window = Gtk.Window()
         self.header_bar = Gtk.HeaderBar()
-        self.iconview = Gtk.IconView()
+        self.iconview = IconView(self)
         self.toolbar = Toolbar(self)
         self.statusbar = Gtk.Statusbar()
 
@@ -85,9 +88,8 @@ class PyWebP(Gtk.Application):
         self.header_bar.set_title("PyWebP-Gtk")
         self.header_bar.set_has_subtitle(False)
         self.header_bar.set_show_close_button(True)
-        # self.header_bar.add(Gtk.Image.new_from_file(os.path.join(os.path.dirname(__file__), 'images/icons/logo/32.png')))
 
-        #about_btn = Gtk.Button.new_from_icon_name("application-system", Gtk.IconSize.LARGE_TOOLBAR)
+        # about_btn = Gtk.Button.new_from_icon_name("application-system", Gtk.IconSize.LARGE_TOOLBAR)
         about_btn = Gtk.Button()
         about_btn.set_image(Gtk.Image.new_from_pixbuf(Pixbuf.new_from_file_at_scale(LOGO_PATH, 32, 32, True)))
         # about_btn.set_image(Gtk.Image.new_from_file(about_icon_path))
@@ -101,7 +103,8 @@ class PyWebP(Gtk.Application):
 
         self.window.set_titlebar(self.header_bar)
 
-        self.iconview.set_vexpand(True)
+        scroll_win = Gtk.ScrolledWindow()
+        scroll_win.add(self.iconview)
 
         self.statusbar.set_border_width(0)
         self.statusbar.set_vexpand(False)
@@ -123,7 +126,7 @@ class PyWebP(Gtk.Application):
         grid.set_row_spacing(5)
         grid.set_column_homogeneous(True)
         grid.set_row_homogeneous(False)
-        grid.attach(self.iconview, 0, 0, 2, 1)
+        grid.attach(scroll_win, 0, 0, 2, 1)
         grid.attach(self.toolbar, 0, 1, 2, 1)
         grid.attach(self.statusbar, 0, 2, 2, 1)
         grid.set_vexpand(True)
@@ -136,7 +139,7 @@ class PyWebP(Gtk.Application):
         self.window.set_icon(Pixbuf.new_from_file_at_scale(LOGO_PATH, 32, 32, True))
         self.window.set_default_icon(Pixbuf.new_from_file_at_scale(LOGO_PATH, 32, 32, True))
 
-    def _init_style(self, darkmode = True):
+    def _init_style(self, darkmode=True):
         """Load the application's CSS file
 
         Args:
@@ -177,7 +180,6 @@ class PyWebP(Gtk.Application):
             prefs_css.remove_class('dark')
         print('app.toggle_darkmode done')
 
-
     def on_about(self, button):
         """Create and display an about us dialog window
 
@@ -201,10 +203,10 @@ class PyWebP(Gtk.Application):
         about_dialog.set_website_label("Github Code Repository")
         about_dialog.set_copyright('Copyright \xa9 2020-2021 Tudo75')
 
-        about_dialog.set_documenters(['Nicola Tudino <https://github.com/tudo75>',])
+        about_dialog.set_documenters(['Nicola Tudino <https://github.com/tudo75>', ])
         about_dialog.add_credit_section('Webptools package', ['Sai Kumar Yava <https://github.com/scionoftech>'])
 
-        about_dialog.set_license_type (Gtk.License.MIT_X11)
+        about_dialog.set_license_type(Gtk.License.MIT_X11)
         about_dialog.set_license('''
 MIT License
 
@@ -244,6 +246,7 @@ SOFTWARE.
 
         Args:
             action: close action of the about dialog
+            parameter: unused value
         """
         action.destroy()
 
@@ -279,6 +282,6 @@ SOFTWARE.
             context_id: context id of the message
             timeout: timeout of the message in seconds. Default is 5
         """
-        self.statusbar.push(context_id, '>> ' + message)
+        self.statusbar.push(context_id, '>>  ' + message)
         GObject.timeout_add(timeout * 1000, self.statusbar.pop, context_id)
 
